@@ -42,28 +42,18 @@ class SupplyChainOptimization:
 
 
     def warehouse_cap_constr(self, x, wh_idx): # ineq
-        # check warehouse `wh_idx` isn't holding more than it can
-        # (total to warehouse <= warehouse capacity)
-        
-        num_holding = 0
-        for fty_idx in range(self.num_fty):
-            # add holding amount from factory `fty_idx`
-            num_holding += x[wh_idx + fty_idx*self.num_wh]
-            
+        num_holding = sum(
+            x[wh_idx + fty_idx * self.num_wh] for fty_idx in range(self.num_fty)
+        )
         if VERBOSE: print(f"Warehouse {wh_idx} holding {num_holding}")
-        
+
         return self.warehouse_capacities[wh_idx] - num_holding
 
 
     def warehouse_io_constr(self, x, wh_idx): # eq
-        # checkhouse warehouse `wh_idx` is sending as much as it receives
-        # (total to warehouse == total from warehouse)
-
-        num_holding = 0
-        for fty_idx in range(self.num_fty):
-            # add holding amount from factory `fty_idx`
-            num_holding += x[wh_idx + fty_idx*self.num_wh]
-
+        num_holding = sum(
+            x[wh_idx + fty_idx * self.num_wh] for fty_idx in range(self.num_fty)
+        )
         offset_index = self.num_fty*self.num_wh # start of warehouse/customer section of list
         _start_index = offset_index + self.num_cus * wh_idx
         num_sending = sum(x[_start_index : _start_index + self.num_cus])
@@ -74,15 +64,11 @@ class SupplyChainOptimization:
 
         
     def customer_receive_constr(self, x, cus_idx): # ineq
-        # check customer `cus_idx` is receiving all that it demands
-        # (total to customer >= demand)
-        
-        num_receiving = 0
         offset_index = self.num_fty * self.num_wh # start of warehouse/customer section
-        for wh_idx in range(self.num_wh):
-            # add receiving amount from warehouse `wh_idx`
-            num_receiving += x[offset_index + wh_idx*self.num_cus + cus_idx]
-
+        num_receiving = sum(
+            x[offset_index + wh_idx * self.num_cus + cus_idx]
+            for wh_idx in range(self.num_wh)
+        )
         if VERBOSE: print(f"Customer {cus_idx} receiving {num_receiving} from wh, ", end="")
 
         offset_index = self.num_fty*self.num_wh + self.num_wh*self.num_cus # start of factory/customer section
@@ -91,7 +77,7 @@ class SupplyChainOptimization:
             num_receiving += x[offset_index + fty_idx*self.num_cus + cus_idx]
 
         if VERBOSE: print(f"{num_receiving} with factory")
-            
+
         return num_receiving - self.customer_demands[cus_idx]
 
 
@@ -129,10 +115,9 @@ class SupplyChainOptimization:
         bounds = self.make_bounds()
         x0 = self.make_input_vars()
 
-        sln = optimize.minimize(self.objective, x0,
-                                bounds=bounds,
-                                constraints=constraints)
-        return sln   
+        return optimize.minimize(
+            self.objective, x0, bounds=bounds, constraints=constraints
+        )   
         
     
 

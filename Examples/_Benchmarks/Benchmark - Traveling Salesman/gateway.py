@@ -26,21 +26,22 @@ class PySolver:
         height, width = len(distance_matrix_2d), len(distance_matrix_2d[0])
         matrix = []
         for row_index in range(height):
-            row = []
-            for col_index in range(width):
-                row.append(distance_matrix_2d[row_index][col_index])
+            row = [distance_matrix_2d[row_index][col_index] for col_index in range(width)]
             matrix.append(row)
         self.solver = FacilityOrderSolver(matrix, home_index)
 ##        print(f"setup: {time.time()-start}")
 
     def build_random_order(self, n_select):
         start = time.time()
-        
+
         num_hubs = len(self.solver.matrix)
         home_index = self.solver.home_index
-        
-        order = sorted(random.sample( set(range(num_hubs)) - set([home_index]), n_select) + [home_index])
-        
+
+        order = sorted(
+            random.sample(set(range(num_hubs)) - {home_index}, n_select)
+            + [home_index]
+        )
+
         # cannot be a Python list; required to return a Java array
         _list = self.gateway.new_array(self.gateway.jvm.int, len(order))
 
@@ -54,13 +55,10 @@ class PySolver:
 
     def get_optimized_order(self, indices_to_visit):
         start = time.time()
-        
-        # passed input cannot be a Java list
-        indices_to_visit_converted = []
-        for i in indices_to_visit:
-            indices_to_visit_converted.append(i)
+
+        indices_to_visit_converted = list(indices_to_visit)
         solution = self.solver.solve(indices_to_visit_converted)['order']
-        
+
         # returned output cannot be a Python list; required to return a Java array
         java_list = self.gateway.new_array(self.gateway.jvm.int, len(solution))
         for i, v in enumerate(solution):

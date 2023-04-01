@@ -55,10 +55,11 @@ class FacilityOrderSolver:
         else:
             relative_home_index = indices_to_visit.index(self.home_index)
             matrix = np.rot90(np.rot90(self.matrix[ indices_to_visit ], k=-1)[ indices_to_visit ], k=1)
-        data = {'distance_matrix': matrix,
+        return {
+            'distance_matrix': matrix,
             'num_vehicles': 1,
-            'home': relative_home_index}
-        return data
+            'home': relative_home_index,
+        }
 
 
     def _extract_solution(self, manager: RoutingIndexManager, routing: RoutingModel, assignment: Assignment, indices_to_visit: List[int]) -> Dict[str, Any]:

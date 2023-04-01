@@ -41,21 +41,22 @@ def parse_input(raw_model_data):
 
 
 def _build_order(source_type, source_index, dest_type, dest_index, amount):
-    order = dict()
-    order['source_type'] = source_type
-    order['source_index'] = source_index
-    order['destination_type'] = dest_type
-    order['destination_index'] = dest_index
-    order['amount'] = ceil(amount*10)/10
-    return order
+    return {
+        'source_type': source_type,
+        'source_index': source_index,
+        'destination_type': dest_type,
+        'destination_index': dest_index,
+        'amount': ceil(amount * 10) / 10,
+    }
 
 
 def interpret_output(optimized_result, num_factories, num_warehouses, num_customers):
-    info_data = dict()
-    info_data['cost'] = round(optimized_result.fun, 2)
-    info_data['is_successful'] = optimized_result.success.item() # convert np.bool_ to python bool for json dumping
+    info_data = {
+        'cost': round(optimized_result.fun, 2),
+        'is_successful': optimized_result.success.item(),
+    }
     info_data['message'] = optimized_result.message
-    
+
     var_array = optimized_result.x
     # The first `num_factories` rows ship from factories at the row to each warehouse.
     # The next `num_warehouses` rows ship from warehouses at the row to each customer.
@@ -78,20 +79,28 @@ def interpret_output(optimized_result, num_factories, num_warehouses, num_custom
     orders_data = []
     for factory_index in range(num_factories):
         # add orders going from factories -> warehouses
-        for warehouse_index, amount in enumerate(amounts_f2w[factory_index]):
-            if amount > 0:
-                orders_data.append(_build_order('f', factory_index, 'w', warehouse_index, amount))
+        orders_data.extend(
+            _build_order('f', factory_index, 'w', warehouse_index, amount)
+            for warehouse_index, amount in enumerate(
+                amounts_f2w[factory_index]
+            )
+            if amount > 0
+        )
         # add orders going from factories -> customers
-        for customer_index, amount in enumerate(amounts_f2c[factory_index]):
-            if amount > 0:
-                orders_data.append(_build_order('f', factory_index, 'c', customer_index, amount))
-
+        orders_data.extend(
+            _build_order('f', factory_index, 'c', customer_index, amount)
+            for customer_index, amount in enumerate(amounts_f2c[factory_index])
+            if amount > 0
+        )
     for warehouse_index in range(num_warehouses):
         # add orders going from warehouses -> customers
-        for customer_index, amount in enumerate(amounts_w2c[warehouse_index]):
-            if amount > 0:
-                orders_data.append(_build_order('w', warehouse_index, 'c', customer_index, amount))
-
+        orders_data.extend(
+            _build_order('w', warehouse_index, 'c', customer_index, amount)
+            for customer_index, amount in enumerate(
+                amounts_w2c[warehouse_index]
+            )
+            if amount > 0
+        )
     return info_data, orders_data    
     
     
@@ -110,31 +119,27 @@ def find_solution(raw_model_data):
 
 
 def generate_dot(solution, only_body=False, one_line=False):
-    if type(solution) != np.ndarray:
-        array = solution.x
-    else:
-        array = solution
-
+    array = solution.x if type(solution) != np.ndarray else solution
     amounts_f2w, amounts_w2c, amounts_f2c = np.split(array, [8, 28])
     amounts_f2w = amounts_f2w.reshape((2, -1)).round(5).tolist()
     amounts_w2c = amounts_w2c.reshape((4, -1)).round(5).tolist()
     amounts_f2c = amounts_f2c.reshape((2, -1)).round(5).tolist()
 
     with open("temp.txt","w") as f:
-        f.write("F2W -> " + str(amounts_f2w))
-        f.write("W2C -> " + str(amounts_w2c))
-        f.write("F2C -> " + str(amounts_f2c))
+        f.write(f"F2W -> {str(amounts_f2w)}")
+        f.write(f"W2C -> {str(amounts_w2c)}")
+        f.write(f"F2C -> {str(amounts_f2c)}")
 
     source = "\toverlap=false\n\tsubgraph {\n\t\trank1 [style=invisible];\n"
     if not only_body:
         source = "digraph {\n" + source
-    
+
     for i in range(len(amounts_f2w)):
         a_2c = amounts_f2c[i]
         for j,a in enumerate(a_2c):
             if a > 0:
                 source += f"\t\tF{i+1} -> C{j+1} [label={a}]\n"
-            
+
         a_2w = amounts_f2w[i]
         for j,a in enumerate(a_2w):
             if a > 0:

@@ -22,7 +22,7 @@ def get_updated_value(current_value, volatility):
 def update_agent_data(data_json):
     '''Passes in list of Company agent types as JSON string and returns the updated values'''
     data_list = json.loads(data_json)
-    updated_data = dict()
+    updated_data = {}
     for company_dict in data_list:
         # get data from stock listing agent
         stock_listing = company_dict['stockListing']

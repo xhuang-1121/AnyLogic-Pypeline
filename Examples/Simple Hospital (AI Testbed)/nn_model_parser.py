@@ -44,7 +44,4 @@ class HospitalPredictor:
         # update deque with latest value (for next prediction)
         self.last_rates_queue.append(predicted_value)
 
-        # original data was scaled to [-1, 1]
-        # scale back using pre-calculated formula (based on original ranges)
-        unscaled_value = (predicted_value * 207) / 40 + 5.525
-        return unscaled_value
+        return (predicted_value * 207) / 40 + 5.525

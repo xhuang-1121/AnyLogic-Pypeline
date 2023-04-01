@@ -18,10 +18,10 @@ def to_file(path="file.py"):
         cb = cb[1:]
     if cb.endswith("}"):
         cb = cb[:-1]
-        
-    cb = "[" + cb + "]"
+
+    cb = f"[{cb}]"
     lines = eval(cb)
-    
+
     with open(path, "w") as f:
         f.write("\n".join(lines))
 

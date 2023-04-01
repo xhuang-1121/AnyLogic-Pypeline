@@ -3,16 +3,29 @@ from h2o_wave import site, data, ui
 def get_objects(n_callcenters):
     ''' Returns a mapping from names to objects representing the cards used in the ui '''
     n_categories = 3
-    
-    objects = dict()
-    
-    objects['outcomes'] = ui.plot_card(
-        box='1 1 12 5',
-        title='Outcomes by Call Center',
-        data=data('country callcenter count', n_callcenters*n_categories),
-        plot=ui.plot([ui.mark(type='interval', x='=callcenter', y='=count', color='=country', stack='auto', y_min=0)])
-    )
-                   
+
+    objects = {
+        'outcomes': ui.plot_card(
+            box='1 1 12 5',
+            title='Outcomes by Call Center',
+            data=data(
+                'country callcenter count', n_callcenters * n_categories
+            ),
+            plot=ui.plot(
+                [
+                    ui.mark(
+                        type='interval',
+                        x='=callcenter',
+                        y='=count',
+                        color='=country',
+                        stack='auto',
+                        y_min=0,
+                    )
+                ]
+            ),
+        )
+    }
+
     for i in range(n_callcenters):
         col = (i%12)+1
         row = (i//12)*2+6
@@ -38,10 +51,7 @@ def initialize(n_callcenters, ymax=1):
         del page[f'utilcc{i}']
 
     objects = get_objects(n_callcenters)
-    cards = dict()
-    for name,obj in objects.items():
-        cards[name] = page.add(name, obj) 
-
+    cards = {name: page.add(name, obj) for name, obj in objects.items()}
     #card.data = [["Answered_Local","CC00",36],["Answered_External","CC00",0],["Balked_Call","CC00",41], ["Answered_Local","CC01",39],["Answered_External","CC01",14],["Balked_Call","CC01",0], ["Answered_Local","CC02",64],["Answered_External","CC02",6],["Balked_Call","CC02",0], ["Answered_Local","CC03",75],["Answered_External","CC03",6],["Balked_Call","CC03",0]]
     page.save()
 
