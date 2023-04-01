@@ -57,10 +57,11 @@ class FacilityOrderSolver:
         else:
             relative_home_index = indices_to_visit.index(self.home_index)
             matrix = np.rot90(np.rot90(self.matrix[ indices_to_visit ], k=-1)[ indices_to_visit ], k=1)
-        data = {'distance_matrix': matrix,
+        return {
+            'distance_matrix': matrix,
             'num_vehicles': 1,
-            'home': relative_home_index}
-        return data
+            'home': relative_home_index,
+        }
 
 
     def _extract_solution(self, manager: RoutingIndexManager, routing: RoutingModel, assignment: Assignment, indices_to_visit: List[int]) -> Dict[str, Any]:
@@ -102,7 +103,10 @@ class FacilityOrderSolver:
     def build_random_order(self, n_facilities: int) -> List[int]:
         """Randomly samples a given number of facilities from the total number."""
         n_total = len(self.matrix)
-        return sorted(random.sample( set(range(n_total)) - set([self.home_index]), n_facilities) + [self.home_index])
+        return sorted(
+            random.sample(set(range(n_total)) - {self.home_index}, n_facilities)
+            + [self.home_index]
+        )
 
     def solve(self, indices_to_visit: List[int] = None) -> Dict[str, Any]:
         """Finds the optimal order of facilities to minimize distance.
